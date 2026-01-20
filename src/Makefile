@@ -1,13 +1,13 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -O3 -Wall -Wextra -pedantic
-TARGET = k_clique_solver
+TARGET = kclique
 
 . PHONY: all clean run test help
 
 all: $(TARGET)
 
-$(TARGET): k_clique_solver.cpp
-	$(CXX) $(CXXFLAGS) -o $(TARGET) k_clique_solver.cpp
+$(TARGET): kclique.cpp
+	$(CXX) $(CXXFLAGS) -o $(TARGET) kclique.cpp
 
 run: $(TARGET)
 	./$(TARGET)

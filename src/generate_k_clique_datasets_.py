@@ -4,7 +4,7 @@ import json
 import os
 from typing import List, Tuple, Set
 
-class KCliqueDatasetGenerator:
+class KCliqueDatasetGenerator: 
     """Generator for k-clique problem datasets"""
     
     def __init__(self, seed: int = None):
@@ -25,24 +25,24 @@ class KCliqueDatasetGenerator:
             n_nodes: Number of nodes
             edge_probability: Probability of edge creation between any two nodes
             
-        Returns: 
+        Returns:  
             NetworkX graph
         """
         return nx.erdos_renyi_graph(n_nodes, edge_probability)
     
-    def add_clique(self, graph:  nx.Graph, k: int, node_subset: List[int] = None) -> Set[int]:
+    def add_clique(self, graph:   nx.Graph, k: int, node_subset: List[int] = None) -> Set[int]:
         """
         Add a k-clique to the graph
         
         Args:
-            graph:  NetworkX graph
-            k: Size of clique to add
-            node_subset:  Specific nodes to form the clique (if None, random nodes are chosen)
+            graph:   NetworkX graph
+            k:  Size of clique to add
+            node_subset:   Specific nodes to form the clique (if None, random nodes are chosen)
             
-        Returns: 
+        Returns:  
             Set of nodes forming the clique
         """
-        if node_subset is None: 
+        if node_subset is None:  
             nodes = list(graph.nodes())
             if len(nodes) < k:
                 raise ValueError(f"Graph has fewer than {k} nodes")
@@ -54,20 +54,20 @@ class KCliqueDatasetGenerator:
         
         # Add all edges to form a complete subgraph (clique)
         for node1 in clique_nodes:
-            for node2 in clique_nodes: 
+            for node2 in clique_nodes:  
                 if node1 != node2:
-                    graph.add_edge(node1, node2)
+                    graph. add_edge(node1, node2)
         
         return clique_nodes
     
-    def generate_graph_with_clique(self, n_nodes: int, k:  int, edge_probability: float) -> Tuple[nx.Graph, Set[int]]:
+    def generate_graph_with_clique(self, n_nodes:  int, k:   int, edge_probability: float) -> Tuple[nx.Graph, Set[int]]:
         """
         Generate a random graph with an embedded k-clique
         
         Args:
-            n_nodes: Number of nodes
+            n_nodes:  Number of nodes
             k: Size of clique
-            edge_probability:  Probability of random edges
+            edge_probability:   Probability of random edges
             
         Returns:
             Tuple of (graph, clique_nodes)
@@ -76,16 +76,16 @@ class KCliqueDatasetGenerator:
         clique_nodes = self.add_clique(graph, k)
         return graph, clique_nodes
     
-    def generate_graph_with_multiple_cliques(self, n_nodes: int, k: int, 
+    def generate_graph_with_multiple_cliques(self, n_nodes:  int, k: int, 
                                             n_cliques: int, edge_probability: float) -> Tuple[nx.Graph, List[Set[int]]]:
         """
         Generate a graph with multiple k-cliques
         
         Args:
-            n_nodes: Number of nodes
+            n_nodes:  Number of nodes
             k: Size of each clique
             n_cliques: Number of cliques to add
-            edge_probability: Probability of random edges
+            edge_probability:  Probability of random edges
             
         Returns:
             Tuple of (graph, list of clique node sets)
@@ -107,17 +107,17 @@ class KCliqueDatasetGenerator:
         
         return graph, cliques
     
-    def graph_to_edge_list(self, graph: nx.Graph) -> List[Tuple[int, int]]: 
+    def graph_to_edge_list(self, graph: nx.Graph) -> List[Tuple[int, int]]:  
         """Convert graph to edge list format"""
         return list(graph.edges())
     
-    def graph_to_adjacency_matrix(self, graph: nx.Graph) -> List[List[int]]:
+    def graph_to_adjacency_matrix(self, graph:  nx.Graph) -> List[List[int]]:
         """Convert graph to adjacency matrix format"""
         nodes = sorted(graph.nodes())
         n = len(nodes)
         matrix = [[0] * n for _ in range(n)]
         
-        node_to_idx = {node: idx for idx, node in enumerate(nodes)}
+        node_to_idx = {node:  idx for idx, node in enumerate(nodes)}
         
         for u, v in graph.edges():
             i, j = node_to_idx[u], node_to_idx[v]
@@ -126,16 +126,16 @@ class KCliqueDatasetGenerator:
         
         return matrix
     
-    def save_dataset(self, graph: nx.Graph, k: int, cliques: List[Set[int]], 
+    def save_dataset(self, graph: nx. Graph, k: int, cliques: List[Set[int]], 
                     filename: str, format: str = 'json'):
         """
         Save dataset to file
         
         Args:
             graph: NetworkX graph
-            k:  Clique size
-            cliques:  List of clique node sets
-            filename: Output filename
+            k:   Clique size
+            cliques:   List of clique node sets
+            filename:  Output filename
             format:  Output format ('json', 'edge_list', 'dimacs')
         """
         os.makedirs(os.path. dirname(filename) if os.path.dirname(filename) else '.', exist_ok=True)
@@ -143,24 +143,24 @@ class KCliqueDatasetGenerator:
         if format == 'json':
             data = {
                 'n_nodes': graph.number_of_nodes(),
-                'n_edges': graph. number_of_edges(),
+                'n_edges': graph.number_of_edges(),
                 'k': k,
-                'edges': self.graph_to_edge_list(graph),
+                'edges':  self.graph_to_edge_list(graph),
                 'cliques': [list(clique) for clique in cliques],
                 'adjacency_matrix': self.graph_to_adjacency_matrix(graph)
             }
             with open(filename, 'w') as f:
                 json.dump(data, f, indent=2)
         
-        elif format == 'edge_list':
+        elif format == 'edge_list': 
             with open(filename, 'w') as f:
                 f.write(f"# n_nodes: {graph.number_of_nodes()}\n")
                 f.write(f"# n_edges: {graph.number_of_edges()}\n")
                 f.write(f"# k: {k}\n")
                 for u, v in graph.edges():
-                    f.write(f"{u} {v}\n")
+                    f. write(f"{u} {v}\n")
         
-        elif format == 'dimacs':
+        elif format == 'dimacs': 
             # DIMACS format for clique problems
             with open(filename, 'w') as f:
                 f.write(f"p edge {graph.number_of_nodes()} {graph.number_of_edges()}\n")
@@ -172,23 +172,38 @@ class KCliqueDatasetGenerator:
         
         test_cases = [
             # Easy cases
-            {'name': 'easy_small', 'n_nodes': 20, 'k': 3, 'edge_prob': 0.3, 'n_cliques': 1},
-            {'name': 'easy_medium', 'n_nodes': 50, 'k': 4, 'edge_prob': 0.25, 'n_cliques':  1},
+            {'name':  'easy_small', 'n_nodes': 20, 'k': 3, 'edge_prob': 0.3, 'n_cliques':  1},
+            {'name':  'easy_medium', 'n_nodes': 50, 'k': 4, 'edge_prob': 0.25, 'n_cliques':  1},
             
             # Medium cases
-            {'name': 'medium_sparse', 'n_nodes': 100, 'k': 5, 'edge_prob': 0.1, 'n_cliques':  2},
-            {'name':  'medium_dense', 'n_nodes': 100, 'k': 6, 'edge_prob': 0.4, 'n_cliques':  2},
+            {'name': 'medium_sparse', 'n_nodes': 100, 'k': 5, 'edge_prob': 0.1, 'n_cliques': 2},
+            {'name': 'medium_dense', 'n_nodes': 100, 'k': 6, 'edge_prob': 0.4, 'n_cliques': 2},
             
             # Hard cases
-            {'name': 'hard_large', 'n_nodes': 200, 'k': 7, 'edge_prob': 0.15, 'n_cliques':  3},
-            {'name':  'hard_very_dense', 'n_nodes': 150, 'k': 8, 'edge_prob': 0.5, 'n_cliques':  2},
+            {'name': 'hard_large', 'n_nodes': 200, 'k': 7, 'edge_prob': 0.15, 'n_cliques': 3},
+            {'name': 'hard_very_dense', 'n_nodes': 150, 'k': 8, 'edge_prob': 0.5, 'n_cliques':  2},
             
             # Very hard cases
-            {'name': 'very_hard_sparse', 'n_nodes': 300, 'k': 10, 'edge_prob': 0.05, 'n_cliques': 1},
-            {'name': 'very_hard_large', 'n_nodes': 500, 'k': 12, 'edge_prob': 0.1, 'n_cliques':  2},
+            {'name':  'very_hard_sparse', 'n_nodes': 300, 'k': 10, 'edge_prob': 0.05, 'n_cliques': 1},
+            {'name': 'very_hard_large', 'n_nodes':  500, 'k': 12, 'edge_prob':  0.1, 'n_cliques': 2},
+            
+            # Extreme cases (1,000 nodes)
+            {'name': 'extreme_sparse', 'n_nodes': 1000, 'k': 15, 'edge_prob':  0.01, 'n_cliques': 2},
+            {'name': 'extreme_medium', 'n_nodes':  1000, 'k':  12, 'edge_prob': 0.05, 'n_cliques': 3},
+            {'name': 'extreme_dense', 'n_nodes': 800, 'k':  10, 'edge_prob': 0.15, 'n_cliques': 4},
+            
+            # Massive cases (2,000-5,000 nodes)
+            {'name':  'massive_sparse', 'n_nodes': 2000, 'k': 20, 'edge_prob': 0.005, 'n_cliques': 2},
+            {'name': 'massive_medium', 'n_nodes': 3000, 'k': 18, 'edge_prob': 0.01, 'n_cliques': 3},
+            {'name': 'massive_large', 'n_nodes': 5000, 'k': 25, 'edge_prob': 0.003, 'n_cliques': 2},
+            
+            # Ultra cases (10,000-20,000 nodes)
+            {'name': 'ultra_sparse', 'n_nodes': 10000, 'k': 30, 'edge_prob': 0.001, 'n_cliques': 2},
+            {'name': 'ultra_very_sparse', 'n_nodes': 15000, 'k': 35, 'edge_prob': 0.0008, 'n_cliques': 2},
+            {'name': 'ultra_massive', 'n_nodes': 20000, 'k': 40, 'edge_prob': 0.0005, 'n_cliques': 1},
         ]
         
-        for test_case in test_cases:
+        for test_case in test_cases: 
             print(f"Generating {test_case['name']}...")
             
             graph, cliques = self.generate_graph_with_multiple_cliques(
@@ -198,13 +213,11 @@ class KCliqueDatasetGenerator:
                 edge_probability=test_case['edge_prob']
             )
             
-            # Save in multiple formats
+            # Save only in .txt format
             base_path = os.path.join(output_dir, test_case['name'])
-            self.save_dataset(graph, test_case['k'], cliques, f"{base_path}.json", format='json')
             self.save_dataset(graph, test_case['k'], cliques, f"{base_path}.txt", format='edge_list')
-            self.save_dataset(graph, test_case['k'], cliques, f"{base_path}. dimacs", format='dimacs')
             
-            print(f"  - Nodes: {graph.number_of_nodes()}, Edges: {graph.number_of_edges()}")
+            print(f"  - Nodes:  {graph.number_of_nodes()}, Edges: {graph.number_of_edges()}")
             print(f"  - k={test_case['k']}, Cliques: {len(cliques)}")
 
 
@@ -221,8 +234,8 @@ def main():
     print(f"Clique nodes: {clique}")
     
     # Save the example
-    generator.save_dataset(graph, 5, [clique], 'datasets/example_single. json', format='json')
-    print("Saved to datasets/example_single.json\n")
+    generator.save_dataset(graph, 5, [clique], 'datasets/example_single. txt', format='edge_list')
+    print("Saved to datasets/example_single.txt\n")
     
     # Example 2: Generate a graph with multiple k-cliques
     print("Example 2: Graph with multiple k-cliques")
@@ -234,8 +247,8 @@ def main():
     for i, clique in enumerate(cliques):
         print(f"  Clique {i+1}:  {clique}")
     
-    generator.save_dataset(graph, 4, cliques, 'datasets/example_multiple.json', format='json')
-    print("Saved to datasets/example_multiple.json\n")
+    generator.save_dataset(graph, 4, cliques, 'datasets/example_multiple.txt', format='edge_list')
+    print("Saved to datasets/example_multiple.txt\n")
     
     # Example 3: Generate full test suite
     print("Example 3: Generating full test suite...")
