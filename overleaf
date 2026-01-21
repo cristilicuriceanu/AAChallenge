@@ -1,0 +1,410 @@
+\documentclass[runningheads]{llncs}
+
+% Package-uri necesare pentru formatare, grafice și cod
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{geometry}
+
+% Configurare pentru afișarea codului Python
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\begin{document}
+
+% =============================================================================
+% TITLU ȘI AUTORI
+% =============================================================================
+\title{Analiza Algoritmilor: Problema K-Clique}
+\subtitle{Studiu Comparativ: Soluții Exacte vs. Euristici}
+
+\author{
+Saveli Victor\and
+Dragusoiu Bogdan\and
+Licuriceanu Cristian
+}
+
+\authorrunning{Saveli Victor,Licuriceanu Cristian, Dragusoiu Bogdan}
+
+\institute{Facultatea de Automatică și Calculatoare,\\
+Universitatea Politehnica din București\\
+\email{bogdan.dragusoiu@stud.acs.upb.ro, victor.saveli@stud.acs.upb.ro, clicuriceanu@stud.acs.upb.ro }}
+
+\maketitle
+
+\begin{abstract}
+Acest raport prezintă un studiu detaliat asupra problemei K-Clique (Găsirea Clicii de Dimensiune Maximă), o problemă fundamentală în teoria grafurilor cunoscută ca fiind NP-Hard. Lucrarea analizează trei abordări distincte: un algoritm exact bazat pe Backtracking pentru garantarea corectitudinii și două euristici (Greedy Max Degree și Hill Climbing) pentru eficiență pe instanțe mari. Studiul include o demonstrație formală a complexității problemei, descrierea detaliată a implementărilor și o evaluare empirică riguroasă a performanțelor (timp de execuție vs. acuratețe) pe seturi de date generate aleator cu densități variate. Rezultatele evidențiază compromisul clasic între timpul de execuție și optimalitatea soluției.
+
+\keywords{Maximum Clique \and NP-Hard \and Backtracking \and Greedy Heuristic \and Hill Climbing \and Optimizare Combinatorială.}
+\end{abstract}
+
+% =============================================================================
+% 1. INTRODUCERE
+% =============================================================================
+\section{Introducere}
+
+Problema identificării clicii de dimensiune maximă într-un graf neorientat $G=(V, E)$ este una dintre problemele clasice din informatică. O \textbf{clică} este definită ca un subgraf $C \subseteq V$ astfel încât oricare două noduri distincte $u, v \in C$ sunt adiacente (există muchia $(u, v) \in E$).
+
+Obiectivul problemei \textit{Maximum Clique} este de a găsi o clică $C$ astfel încât $|C|$ să fie maxim. Numărul de noduri din această clică se numește \textit{numărul de clică} al grafului, notat de obicei cu $\omega(G)$.
+
+\subsection{Aplicații Practice}
+Deși este o problemă teoretică dificilă, găsirea clicilor are o aplicabilitate vastă în lumea reală:
+
+\begin{enumerate}
+    \item \textbf{Analiza Rețelelor Sociale:} Într-o rețea socială, o clică reprezintă un grup de persoane unde toată lumea cunoaște pe toată lumea. Identificarea acestor grupuri este esențială pentru detectarea comunităților strâns legate sau a celulelor infracționale.
+    \item \textbf{Bioinformatică:} În analiza structurii proteinelor, clicile sunt folosite pentru a modela similarități structurale. De asemenea, în genomica comparativă, ele ajută la identificarea grupurilor de gene co-exprimate.
+    \item \textbf{Compilatoare și Alocarea Regiștrilor:} Problema colorării grafurilor (folosită în alocarea regiștrilor) este strâns legată de problema clicii, deoarece $\chi(G) \ge \omega(G)$.
+    \item \textbf{Pattern Recognition:} În recunoașterea modelelor, potrivirea a două structuri poate fi redusă la găsirea unei clici maxime într-un "graf de asociație".
+\end{enumerate}
+
+\subsection{Structura Raportului}
+Raportul este structurat astfel: Secțiunea 2 demonstrează apartenența problemei la clasa NP-Hard. Secțiunea 3 detaliază algoritmii implementați. Secțiunea 4 și 5 prezintă metodologia de testare și analiza rezultatelor experimentale, iar Secțiunea 6 oferă concluzii și recomandări practice.
+
+% =============================================================================
+% 2. DEMONSTRAȚIE NP-HARD
+% =============================================================================
+\section{Demonstrație NP-Hard}
+
+Pentru a demonstra că problema \textit{Maximum Clique} este NP-Hard, vom arăta o reducere polinomială de la o problemă cunoscută ca fiind NP-Completă: \textbf{3-SAT} (Satisfiabilitatea formulelor booleene în forma normală conjunctivă cu 3 literali per clauză) la problema de decizie \textbf{k-CLIQUE}.
+
+\subsection{Definiția problemelor}
+\begin{itemize}
+    \item \textbf{3-SAT:} Se dă o formulă booleană $\phi = C_1 \wedge C_2 \wedge \dots \wedge C_k$, unde fiecare clauză $C_i$ are forma $(l_{i,1} \vee l_{i,2} \vee l_{i,3})$. Există o atribuire a variabilelor care face $\phi$ adevărată?
+    \item \textbf{k-CLIQUE:} Se dă un graf $G$ și un întreg $k$. Există în $G$ o clică de dimensiune cel puțin $k$?
+\end{itemize}
+
+\subsection{Reducerea $3-SAT \leq_p k-CLIQUE$}
+Construim o instanță a problemei k-CLIQUE pornind de la o instanță arbitrară a 3-SAT.
+Fie $\phi$ o formulă cu $k$ clauze.
+
+\subsubsection{Construcția Grafului:}
+1. Pentru fiecare clauză $C_r = (l_{r,1} \vee l_{r,2} \vee l_{r,3})$ din $\phi$, creăm 3 noduri în graful $G$. Aceste noduri reprezintă literalii din clauză. În total, graful va avea $3k$ noduri.
+2. Adăugăm muchii între două noduri $u$ (din clauza $C_i$) și $v$ (din clauza $C_j$) dacă și numai dacă:
+    \begin{itemize}
+        \item Nodurile sunt în clauze diferite ($i \neq j$).
+        \item Literalii nu sunt contradictorii (adică nu avem situația $u = x$ și $v = \neg x$).
+    \end{itemize}
+
+\subsubsection{Demonstrația Echivalenței:}
+Trebuie să arătăm că $\phi$ este satisfiabilă $\iff$ $G$ are o clică de dimensiune $k$.
+
+\textbf{Direcția "$\Rightarrow$":}
+Dacă $\phi$ este satisfiabilă, există o atribuire de adevăr astfel încât în fiecare clauză $C_i$ cel puțin un literal este adevărat. Selectăm câte un literal adevărat din fiecare clauză. Fie $S$ mulțimea nodurilor corespunzătoare acestor literali.
+Deoarece am ales un nod din fiecare cele $k$ clauze, $|S| = k$. Oricare două noduri din $S$ sunt din clauze diferite (prin construcție) și sunt consistente (nu pot fi $x$ și $\neg x$ ambele adevărate). Deci, există muchii între oricare două noduri din $S$. $S$ formează o k-clică.
+
+\textbf{Direcția "$\Leftarrow$":}
+Dacă $G$ are o k-clică, aceasta trebuie să conțină exact un nod din fiecare grup de 3 noduri corespunzător unei clauze (nu există muchii în interiorul aceleiași clauze).
+Setăm valoarea de adevăr a literalilor corespunzători nodurilor din clică pe \textit{True}. Deoarece nodurile sunt conectate, nu există conflicte ($x$ și $\neg x$). Această atribuire satisface toate cele $k$ clauze.
+
+\subsubsection{Concluzie:}
+Deoarece reducerea se face în timp polinomial și 3-SAT este NP-Completă, rezultă că k-CLIQUE este NP-Completă, iar varianta de optimizare (\textit{Maximum Clique}) este NP-Hard.
+
+
+% =============================================================================
+% 3. PREZENTARE ALGORITMI
+% =============================================================================
+\section{Soluții Abordate}
+
+Am implementat și analizat trei algoritmi distincti: o soluție exactă și două euristici. Implementarea a fost realizată în limbajul Python.
+
+\subsection{Backtracking (Soluție Exactă)}
+Această abordare explorează exhaustiv spațiul de căutare pentru a găsi clica maximă. Deși garantează soluția optimă, complexitatea sa este exponențială $O(2^N)$.
+
+\textbf{Descriere:} Algoritmul menține o clică curentă și încearcă să o extindă recursiv cu noduri candidate.
+\textbf{Optimizare (Pruning):} O optimizare critică este oprirea căutării pe o ramură dacă dimensiunea clicii curente plus numărul de noduri rămase de verificat nu poate depăși dimensiunea celei mai bune clici găsite până acum.
+
+\textbf{Avantaje:} Gaseste mereu solutia corecta, implementare banala.
+
+\textbf{Dezavantaje:} Foarte lent la seturi de date masive.
+
+\begin{lstlisting}[language=Python, caption=Implementare Backtracking Exact]
+def backtracking_exact(adj_matrix):
+    n = len(adj_matrix)
+    best_clique = []
+    current_clique = []
+
+    def is_clique_candidate(u):
+        for v in current_clique:
+            if adj_matrix[u][v] == 0: return False
+        return True
+
+    def backtrack(start):
+        nonlocal best_clique
+        # Pruning
+        if len(current_clique) + (n - start) <= len(best_clique):
+            return
+            
+        if len(current_clique) > len(best_clique):
+            best_clique = current_clique.copy()
+
+        for u in range(start, n):
+            if is_clique_candidate(u):
+                current_clique.append(u)
+                backtrack(u + 1)
+                current_clique.pop()
+
+    backtrack(0)
+    return sorted(best_clique)
+\end{lstlisting}
+
+\subsection{Greedy Max Degree (Euristică Constructivă)}
+Această euristică construiește o clică pas cu pas, selectând întotdeauna nodul disponibil cu cel mai mare grad, sperând că acesta va face parte din clica maximă.
+
+\textbf{Complexitate:} $O(N^2)$ (datorită recalculării gradelor și verificării adiacenței).
+
+\textbf{Avantaje:} Foarte rapid.
+
+\textbf{Dezavantaje:} Adesea se blochează în maxime locale și ratează soluția optimă, în special în grafuri dense unde gradul nodului nu este un indicator perfect.
+
+\begin{lstlisting}[language=Python, caption=Implementare Greedy Max Degree]
+def greedy_max_degree(adj_matrix):
+    n = len(adj_matrix)
+    clique = []
+    used = [False] * n
+
+    # Porneste cu nodul de grad maxim
+    degrees = [sum(row) for row in adj_matrix]
+    start_node = degrees.index(max(degrees))
+    clique.append(start_node)
+    used[start_node] = True
+
+    changed = True
+    while changed:
+        changed = False
+        best_node = -1
+        best_degree = -1
+        
+        for u in range(n):
+            if used[u]: continue
+            # Verifica conexiunea cu toti membrii clicii
+            if all(adj_matrix[u][v] == 1 for v in clique):
+                deg = sum(adj_matrix[u])
+                if deg > best_degree:
+                    best_degree = deg
+                    best_node = u
+        
+        if best_node != -1:
+            clique.append(best_node)
+            used[best_node] = True
+            changed = True
+            
+    return sorted(clique)
+\end{lstlisting}
+
+\subsection{Hill Climbing (Local Search)}
+Această abordare încearcă să îmbunătățească o soluție existentă (generată inițial greedy) prin modificări locale.
+
+\textbf{Strategie:} Algoritmul utilizează o tehnică de căutare locală pentru a extinde o clică inițială construită prin metoda Greedy. Nucleul strategiei constă în operația de tip "1-swap-2": se încearcă eliminarea unui singur nod din clica curentă și înlocuirea acestuia cu două noduri externe. Condiția este ca cele două noduri noi să fie adiacente între ele și să fie conectate cu toate nodurile rămase în clică. Dacă această mutare este posibilă, dimensiunea clicii crește cu 1 unitate la fiecare iterație reușită.
+
+\textbf{Complexitate:} Variabilă, determinată de numărul de îmbunătățiri succesive până la atingerea unui maxim local. Deoarece dimensiunea clicii este limitată de n, numărul de iterații de îmbunătățire este finit.
+
+\textbf{Avantaje:} Spre deosebire de un Greedy simplu care se oprește imediat ce nu mai poate adăuga un nod, această strategie poate "sacrifica" un nod existent pentru a deschide calea către două noduri noi, evadând astfel din unele maxime locale suboptimale.
+
+\textbf{Dezavantaje:} Pe măsură ce graful devine foarte dens sau foarte mare, căutarea perechilor de candidați care sunt conectați și între ei, și cu restul clicii, devine costisitoare (O(n2) per tentativă de eliminare). În grafuri masive, acest lucru poate încetini execuția considerabil față de un simplu Greedy.
+
+\begin{lstlisting}[language=Python, caption=Secvență din algoritmul Hill Climbing]
+# ... (porneste cu solutia greedy) ...
+improved = True
+while improved:
+    improved = False
+    clique_set = set(clique)
+    for remove in clique:
+        # Cauta candidati care se conecteaza la toti membrii exceptand 'remove'
+        candidates = [u for u in range(n) if u not in clique_set and 
+                      all(adj_matrix[u][v] == 1 for v in clique if v != remove)]
+        
+        # Incearca sa adauge 2 candidati conectati intre ei
+        for i in range(len(candidates)):
+            for j in range(i + 1, len(candidates)):
+                if adj_matrix[candidates[i]][candidates[j]] == 1:
+                    # Succes: scoatem 1, adaugam 2
+                    clique.remove(remove)
+                    clique.extend([candidates[i], candidates[j]])
+                    improved = True
+                    break
+            if improved: break
+        if improved: break
+\end{lstlisting}
+
+
+% =============================================================================
+% 4. METODOLOGIE DE TESTARE
+% =============================================================================
+\section{Evaluare și Rezultate}
+
+\subsection{4.1 Configurația Sistemului și Datele de Test}
+Testele au fost rulate pe un sistem cu următoarea configurație:
+\begin{itemize}
+    \item \textbf{Procesor:} 1.1 GHz Quad-Core Intel Core i5
+    \item \textbf{Memorie:} 8 GB RAM
+    \item \textbf{Limbaj:} Python 3.13.5
+    \item \textbf{Sistem de operare:} macOS Sequoia 15.7.3
+\end{itemize}
+
+Setul de teste a fost generat sintetic folosind modelul aleator Erdos-Renyi $G(n, p)$, unde $n$ este numărul de noduri și $p$ este probabilitatea existenței unei muchii (densitatea).
+Au fost variate următoarele dimensiuni:
+\begin{itemize}
+    \item $N \in \{10, 12, 15, 20, 25, 30, 35, 40, 45, 50, 55\}$
+    \item Densități $p \in \{0.1, 0.3, 0.5, 0.7\}$
+\end{itemize}
+
+\subsection{4.2 Analiza Corectitudinii}
+Tabelul de mai jos sumarizează acuratețea algoritmilor euristici comparativ cu soluția exactă. Un simbol \checkmark indică faptul că euristica a găsit clica de dimensiune maximă (optimă), iar \text{\sffamily X} indică un rezultat sub-optim.
+
+\begin{table}[H]
+\centering
+\caption{Compararea corectitudinii pe diverse densități și dimensiuni}
+\label{tab:results}
+\begin{tabular}{@{}ccccc@{}}
+\toprule
+\textbf{Densitate} & \textbf{Noduri} & \textbf{Exact (Referință)} & \textbf{Greedy} & \textbf{Hill Climbing} \\ \midrule
+0.1 & 10-35 & \checkmark & \checkmark & \checkmark \\
+0.1 & 40 & \checkmark & \text{\sffamily X} & \text{\sffamily X} \\
+0.1 & 45 & \checkmark & \text{\sffamily X} & \checkmark \\
+\midrule
+0.3 & 10-40 & \checkmark & \checkmark & \checkmark \\
+0.3 & 45 & \checkmark & \text{\sffamily X} & \text{\sffamily X} \\
+0.3 & 55 & \checkmark & \text{\sffamily X} & \text{\sffamily X} \\
+\midrule
+0.5 & 10-15 & \checkmark & \checkmark & \checkmark \\
+0.5 & 20 & \checkmark & \text{\sffamily X} & \checkmark \\
+0.5 & 25-55 & \checkmark & \text{\sffamily X} & Variabil \\
+\midrule
+0.7 & 10-12 & \checkmark & \checkmark & \checkmark \\
+0.7 & 20 & \checkmark & \text{\sffamily X} & \checkmark \\
+0.7 & 50 & \checkmark & \checkmark & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Sumar Acuratețe:}
+\begin{itemize}
+    \item \textbf{Exact:} 100\% (prin definiție).
+    \item \textbf{Greedy:} 54.5\%. Performanța scade drastic pe grafuri cu densitate medie-mare și număr mare de noduri.
+    \item \textbf{Hill Climbing:} 70.5\%. Se observă o îmbunătățire clară față de Greedy, reușind să repare soluția în cazurile unde Greedy se blochează (ex: Densitate 0.5, N=20).
+\end{itemize}
+
+
+\subsection{4.3 Analiza Performanței (Timp și Dimensiune)}
+
+Graficele următoare ilustrează timpul de execuție (scală logaritmică) și dimensiunea clicii găsite pentru diferite densități.
+
+\subsubsection{Cazul Rar (Densitate 0.1)}
+Pentru grafuri rare, spațiul de căutare este mai mic. Algoritmul exact funcționează foarte rapid, comparabil cu euristicile pentru $N$ mic. Totuși, la $N=50$, timpul exact începe să crească exponențial.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{output_11_1.png}
+    \caption{Timp de execuție și Dimensiune Clică (Densitate 0.1). Se observă că Backtracking-ul devine mult mai lent după N=40.}
+    \label{fig:density01}
+\end{figure}
+
+\subsubsection{Cazul Densitate Medie (0.3 - 0.5)}
+Acesta este scenariul cel mai interesant. Euristicile devin esențiale deoarece Backtracking-ul întâmpină dificultăți majore. În graficul de mai jos (Fig. \ref{fig:density05}) pentru densitate 0.5, se vede clar cum Hill Climbing (triunghiuri portocalii) găsește frecvent clici mai mari decât Greedy (pătrate albastre), suprapunându-se adesea cu soluția exactă (cercuri verzi).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{output_11_3.png}
+    \caption{Performanță la Densitate 0.3. Hill Climbing menține optimalitatea mai mult timp decât Greedy.}
+    \label{fig:density03}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{output_11_5.png}
+    \caption{Performanță la Densitate 0.5. Diferența de calitate între Greedy și Hill Climbing devine evidentă. Greedy se plafonează sub optim.}
+    \label{fig:density05}
+\end{figure}
+
+\subsubsection{Cazul Densitate Mare (0.7)}
+În grafurile dense, problema devine extrem de costisitoare pentru algoritmul exact din cauza numărului imens de posibile clici. Timpul Backtracking-ului (linia albastră în stânga) explodează. Hill Climbing oferă un compromis excelent.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{output_11_7.png}
+    \caption{Performanță la Densitate 0.7. Algoritmul exact necesită timp considerabil (axa Y logaritmică).}
+    \label{fig:density07}
+\end{figure}
+
+\subsection{4.4 Interpretarea Rezultatelor}
+
+\begin{itemize}
+    \item \textbf{Timp vs. Calitate:} Backtracking-ul este fezabil doar până la $N \approx 45-50$ noduri. Peste această limită, timpul crește exponențial. Euristicile rămân instantanee ($< 0.001s$) chiar și la dimensiuni mari.
+    \item \textbf{Eșecul Greedy:} Greedy eșuează deoarece alegerea locală (nodul cu grad maxim) nu garantează apartenența la clica globală maximă. Un nod poate avea grad mare fiind conectat la multe noduri disparate care nu sunt conectate între ele.
+    \item \textbf{Succesul Hill Climbing:} Prin strategia "swap", Hill Climbing reușește să iasă din minimele locale. Faptul că a obținut o acuratețe de 70\% față de 54\% la Greedy demonstrează utilitatea căutării locale, cu un cost computațional neglijabil în plus.
+\end{itemize}
+
+
+% =============================================================================
+% 5. CONCLUZII
+% =============================================================================
+\section{Concluzii}
+
+În urma studiului efectuat asupra problemei K-Clique, am evidențiat dificultatea inerentă a problemelor NP-Hard. Niciun algoritm nu poate oferi simultan viteză polinomială și garanția optimului (în ipoteza $P \neq NP$).
+
+\textbf{Strategie Practică:}
+Dacă aș aborda această problemă într-un scenariu real (de exemplu, detectarea comunităților într-o rețea socială):
+
+\begin{enumerate}
+    \item \textbf{Pentru grafuri mici ($N < 50$):} Aș folosi întotdeauna \textbf{Backtracking Exact} cu optimizări de tip bitset și pruning agresiv (algoritmul Bron-Kerbosch), deoarece garanția corectitudinii este valoroasă și timpul este acceptabil.
+    \item \textbf{Pentru grafuri mari:} Aș folosi o meta-euristică. \textbf{Hill Climbing} s-a dovedit net superior variantei Greedy simple. Aș extinde Hill Climbing într-un \textbf{Simulated Annealing} sau \textbf{Algoritm Genetic} pentru a explora mai multe zone ale spațiului de căutare, acceptând un timp de rulare de câteva secunde pentru a crește probabilitatea găsirii optimului.
+    \item \textbf{Investiția de resurse:} Se observă că trecerea de la Greedy la Hill Climbing a adus un câștig de calitate cu un cost de timp infim. Investirea în euristici mai complexe este, deci, justificată.
+\end{enumerate}
+
+În concluzie, deși problema este dificilă computațional, euristicele moderne de tip Local Search pot oferi soluții de o calitate foarte bună ("good enough") pentru majoritatea aplicațiilor practice.
+
+% =============================================================================
+% BIBLIOGRAFIE
+% =============================================================================
+\begin{thebibliography}{8}
+
+\bibitem{karp72}
+Karp, R.M.: Reducibility among Combinatorial Problems. In: Miller, R.E., Thatcher, J.W. (eds.) Complexity of Computer Computations, pp. 85--103. Plenum Press, New York (1972)
+
+\bibitem{cormen}
+Cormen, T.H., Leiserson, C.E., Rivest, R.L., Stein, C.: Introduction to Algorithms, 3rd Edition. MIT Press (2009)
+
+\bibitem{bronkerbosch}
+Bron, C., Kerbosch, J.: Algorithm 457: finding all cliques of an undirected graph. Commun. ACM 16(9), 575--577 (1973)
+
+\bibitem{pardalos}
+Pardalos, P.M., Xue, J.: The maximum clique problem. Journal of Global Optimization 4(3), 301--328 (1994)
+
+\bibitem{benchmark}
+Dataset generat aleator folosind librăria standard Python și algoritmul Erdos-Renyi implementat în cadrul proiectului.
+
+\end{thebibliography}
+
+\end{document}
