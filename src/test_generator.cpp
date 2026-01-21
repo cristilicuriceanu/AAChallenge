@@ -2,90 +2,68 @@
 #include <fstream>
 #include <random>
 #include <set>
+#include <filesystem> // C++17 pentru gestionarea directoarelor
 
 using namespace std;
+namespace fs = std::filesystem;
 
-// Generează un graf aleator
+// --- FUNCȚIILE DE GENERARE (Rămân neschimbate) ---
 void generateRandomGraph(int n, int m, const string& filename) {
     ofstream fout(filename);
     fout << n << " " << m << "\n";
-    
     set<pair<int, int>> edges;
     random_device rd;
     mt19937 gen(rd());
     uniform_int_distribution<> dis(0, n - 1);
     
-    while (edges.size() < m) {
+    while (edges.size() < (unsigned long int)m) {
         int u = dis(gen);
         int v = dis(gen);
-        if (u != v && u < v) {
-            edges.insert({u, v});
-        }
+        if (u != v && u < v) edges.insert({u, v});
     }
     
-    for (auto [u, v] : edges) {
-        fout << u << " " << v << "\n";
-    }
-    
+    for (auto [u, v] : edges) fout << u << " " << v << "\n";
     fout.close();
-    cout << "Generat:  " << filename << " (" << n << " noduri, " << m << " muchii)\n";
+    cout << "Generat:  " << filename << "\n";
 }
 
-// Generează un graf cu o clică mare garantată
 void generateGraphWithClique(int n, int cliqueSize, int extraEdges, const string& filename) {
     ofstream fout(filename);
-    
     set<pair<int, int>> edges;
-    
-    // Adaugă clica
     for (int i = 0; i < cliqueSize; i++) {
-        for (int j = i + 1; j < cliqueSize; j++) {
-            edges.insert({i, j});
-        }
+        for (int j = i + 1; j < cliqueSize; j++) edges.insert({i, j});
     }
-    
-    // Adaugă muchii random
     random_device rd;
     mt19937 gen(rd());
     uniform_int_distribution<> dis(0, n - 1);
-    
-    while (edges.size() < cliqueSize * (cliqueSize - 1) / 2 + extraEdges) {
+    while (edges.size() < (unsigned long int)(cliqueSize * (cliqueSize - 1) / 2 + extraEdges)) {
         int u = dis(gen);
         int v = dis(gen);
-        if (u != v && u < v && edges.find({u, v}) == edges.end()) {
-            edges.insert({u, v});
-        }
+        if (u != v && u < v && edges.find({u, v}) == edges.end()) edges.insert({u, v});
     }
-    
     fout << n << " " << edges.size() << "\n";
-    for (auto [u, v] : edges) {
-        fout << u << " " << v << "\n";
-    }
-    
+    for (auto [u, v] : edges) fout << u << " " << v << "\n";
     fout.close();
-    cout << "Generat: " << filename << " (clică de " << cliqueSize << " noduri)\n";
+    cout << "Generat: " << filename << "\n";
 }
+// ------------------------------------------------
 
 int main() {
-    cout << "Generare teste pentru problema clicii maxime...\n\n";
+    cout << "Generare teste...\n";
+
+    // 1. Creăm directorul input dacă nu există
+    if (!fs::exists("input")) {
+        fs::create_directory("input");
+        cout << "Director creat: input/\n";
+    }
     
-    // Test mic
-    generateRandomGraph(20, 50, "test1_small.in");
+    // 2. Generăm fișierele direct în folderul input/
+    generateRandomGraph(20, 50, "input/test1_small.in");
+    generateRandomGraph(40, 200, "input/test2_medium.in");
+    generateGraphWithClique(30, 8, 100, "input/test3_clique.in");
+    generateRandomGraph(50, 100, "input/test4_sparse.in");
+    generateRandomGraph(30, 300, "input/test5_dense.in");
     
-    // Test mediu
-    generateRandomGraph(40, 200, "test2_medium.in");
-    
-    // Test cu clică garantată
-    generateGraphWithClique(30, 8, 100, "test3_clique.in");
-    
-    // Test sparse
-    generateRandomGraph(50, 100, "test4_sparse.in");
-    
-    // Test dense
-    generateRandomGraph(30, 300, "test5_dense.in");
-    
-    cout << "\nToate testele au fost generate!\n";
-    cout << "Redenumește test-ul dorit în 'clique.in' pentru a-l rula.\n";
-    
+    cout << "\nToate testele au fost generate în folderul 'input/'!\n";
     return 0;
 }
