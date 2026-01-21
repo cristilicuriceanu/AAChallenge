@@ -30,33 +30,33 @@ public:
         m++;
     }
     
-    bool areAdjacent(int u, int v) {
+    bool areAdjacent(int u, int v) const {
         return adjSet[u].count(v) > 0;
     }
     
-    int getNodes() { return n; }
-    int getEdges() { return m; }
-    const vector<int>& getNeighbors(int u) { return adj[u]; }
-    int getDegree(int u) { return adj[u].size(); }
+    int getNodes() const { return n; }
+    int getEdges() const { return m; }
+    const vector<int>& getNeighbors(int u) const { return adj[u]; }
+    int getDegree(int u) const { return adj[u].size(); }
 };
 
 // ============================================================================
 // ALGORITM 1: BACKTRACKING EXACT (garantează soluția corectă)
 // ============================================================================
 // Complexitate: O(3^(n/3)) în cel mai rău caz - exponențial
-// Garanție:  Găsește întotdeauna clica maximă
+// Garanție: Găsește întotdeauna clica maximă
 // Dezavantaj: Foarte lent pentru grafuri mari (n > 50)
 
 class ExactBacktracking {
-private: 
-    Graph& g;
+private:  
+    const Graph& g;
     vector<int> bestClique;
     vector<int> currentClique;
     
     // Verifică dacă nodul u este adiacent cu toți nodurile din clica curentă
     bool isClique(int u) {
         for (int v : currentClique) {
-            if (!g. areAdjacent(u, v)) return false;
+            if (! g.areAdjacent(u, v)) return false;
         }
         return true;
     }
@@ -68,7 +68,7 @@ private:
         }
         
         // Pruning: dacă nu putem depăși soluția curentă, stop
-        if (currentClique.size() + (g.getNodes() - start) <= bestClique.size()) {
+        if (currentClique. size() + (g.getNodes() - start) <= bestClique.size()) {
             return;
         }
         
@@ -82,8 +82,8 @@ private:
         }
     }
     
-public: 
-    ExactBacktracking(Graph& graph) : g(graph) {}
+public:  
+    ExactBacktracking(const Graph& graph) : g(graph) {}
     
     vector<int> findMaxClique() {
         bestClique.clear();
@@ -102,8 +102,8 @@ public:
 // Rată de aproximare:  Poate rata soluția optimă semnificativ
 
 class GreedyMaxDegree {
-private: 
-    Graph& g;
+private:  
+    const Graph& g;
     
     // Calculează câți vecini din clica curentă are fiecare nod candidat
     int countCliqueNeighbors(int u, const vector<int>& clique) {
@@ -114,18 +114,18 @@ private:
         return count;
     }
     
-public:
-    GreedyMaxDegree(Graph& graph) : g(graph) {}
+public: 
+    GreedyMaxDegree(const Graph& graph) : g(graph) {}
     
     vector<int> findMaxClique() {
         vector<int> clique;
-        vector<bool> used(g. getNodes(), false);
+        vector<bool> used(g.getNodes(), false);
         
         // Începe cu nodul de grad maxim
         int maxDeg = -1, startNode = 0;
         for (int i = 0; i < g. getNodes(); i++) {
             if (g.getDegree(i) > maxDeg) {
-                maxDeg = g. getDegree(i);
+                maxDeg = g.getDegree(i);
                 startNode = i;
             }
         }
@@ -140,7 +140,7 @@ public:
             int bestNode = -1;
             int maxNeighbors = -1;
             
-            for (int u = 0; u < g. getNodes(); u++) {
+            for (int u = 0; u < g.getNodes(); u++) {
                 if (used[u]) continue;
                 
                 // Verifică dacă u este adiacent cu toți din clică
@@ -173,15 +173,15 @@ public:
 //   - Pruning mai agresiv
 
 class BranchAndBound {
-private:
-    Graph& g;
+private: 
+    const Graph& g;
     vector<int> bestClique;
     vector<int> currentClique;
     vector<int> order; // Ordinea nodurilor sortată după grad
     
     bool isClique(int u) {
         for (int v : currentClique) {
-            if (!g. areAdjacent(u, v)) return false;
+            if (! g.areAdjacent(u, v)) return false;
         }
         return true;
     }
@@ -204,7 +204,7 @@ private:
         }
         
         // Încearcă fiecare candidat
-        while (! candidates.empty()) {
+        while (!candidates.empty()) {
             int u = candidates.back();
             candidates.pop_back();
             
@@ -231,14 +231,14 @@ private:
     }
     
 public:
-    BranchAndBound(Graph& graph) : g(graph) {
+    BranchAndBound(const Graph& graph) : g(graph) {
         // Sortează nodurile după grad descrescător
         order.resize(g.getNodes());
         for (int i = 0; i < g.getNodes(); i++) {
             order[i] = i;
         }
         sort(order.begin(), order.end(), [&](int a, int b) {
-            return g.getDegree(a) > g.getDegree(b);
+            return g. getDegree(a) > g.getDegree(b);
         });
     }
     
@@ -259,15 +259,19 @@ string formatTime(long long microseconds) {
     if (microseconds < 1000) {
         return to_string(microseconds) + " μs";
     } else if (microseconds < 1000000) {
-        return to_string(microseconds / 1000.0) + " ms";
+        stringstream ss;
+        ss << fixed << setprecision(2) << (microseconds / 1000.0) << " ms";
+        return ss.str();
     } else {
-        return to_string(microseconds / 1000000.0) + " s";
+        stringstream ss;
+        ss << fixed << setprecision(2) << (microseconds / 1000000.0) << " s";
+        return ss.str();
     }
 }
 
 void printClique(const vector<int>& clique, const string& algorithm) {
     cout << "\n=== " << algorithm << " ===\n";
-    cout << "Dimensiune clică: " << clique. size() << "\n";
+    cout << "Dimensiune clică: " << clique.size() << "\n";
     cout << "Noduri: ";
     for (int node : clique) {
         cout << node << " ";
@@ -275,10 +279,10 @@ void printClique(const vector<int>& clique, const string& algorithm) {
     cout << "\n";
 }
 
-bool verifyClique(Graph& g, const vector<int>& clique) {
+bool verifyClique(const Graph& g, const vector<int>& clique) {
     for (size_t i = 0; i < clique.size(); i++) {
         for (size_t j = i + 1; j < clique.size(); j++) {
-            if (!g.areAdjacent(clique[i], clique[j])) {
+            if (! g.areAdjacent(clique[i], clique[j])) {
                 return false;
             }
         }
@@ -316,7 +320,7 @@ int main() {
     
     // ============= ALGORITM 1: BACKTRACKING EXACT =============
     cout << "\n[1] Rulare Backtracking Exact.. .\n";
-    auto start1 = high_resolution_clock::now();
+    auto start1 = high_resolution_clock:: now();
     
     ExactBacktracking exact(g);
     vector<int> exactClique = exact.findMaxClique();
@@ -346,13 +350,13 @@ int main() {
     cout << "Acuratețe: " << accuracy2 << "% (raport față de optim)\n";
     
     // ============= ALGORITM 3: BRANCH AND BOUND =============
-    cout << "\n[3] Rulare Branch and Bound.. .\n";
-    auto start3 = high_resolution_clock:: now();
+    cout << "\n[3] Rulare Branch and Bound...\n";
+    auto start3 = high_resolution_clock::now();
     
     BranchAndBound bnb(g);
     vector<int> bnbClique = bnb.findMaxClique();
     
-    auto end3 = high_resolution_clock::now();
+    auto end3 = high_resolution_clock:: now();
     auto duration3 = duration_cast<microseconds>(end3 - start3);
     
     printClique(bnbClique, "Branch and Bound");
@@ -368,19 +372,19 @@ int main() {
     cout << string(60, '=') << "\n";
     
     cout << "\nDimensiuni clici găsite:\n";
-    cout << "  Exact:   " << exactClique.size() << " (optimal)\n";
-    cout << "  Greedy: " << greedyClique.size() << " (" << accuracy2 << "%)\n";
-    cout << "  B&B:    " << bnbClique.size() << " (" << accuracy3 << "%)\n";
+    cout << "  Exact:    " << exactClique.size() << " (optimal)\n";
+    cout << "  Greedy:  " << greedyClique.size() << " (" << accuracy2 << "%)\n";
+    cout << "  B&B:     " << bnbClique.size() << " (" << accuracy3 << "%)\n";
     
     cout << "\nTimp de execuție:\n";
     cout << "  Exact:   " << formatTime(duration1.count()) << " (baseline)\n";
     
     long long time2 = max(1LL, (long long)duration2.count());
-    cout << "  Greedy: " << formatTime(duration2.count()) << " (speedup: " 
+    cout << "  Greedy:  " << formatTime(duration2.count()) << " (speedup:  " 
          << (double)duration1.count() / time2 << "x)\n";
     
     long long time3 = max(1LL, (long long)duration3.count());
-    cout << "  B&B:    " << formatTime(duration3.count()) << " (speedup: "
+    cout << "  B&B:      " << formatTime(duration3.count()) << " (speedup: "
          << (double)duration1.count() / time3 << "x)\n";
     
     // Statistici suplimentare
@@ -405,15 +409,68 @@ int main() {
     cout << "Dimensiune clică maximă: " << exactClique.size() 
          << " (" << (double)exactClique.size() / n * 100 << "% din noduri)\n";
     
-    // Scriere în fișier (folosim soluția exactă)
-    fout << exactClique.size() << "\n";
+    // ============= SCRIERE ÎN FIȘIER - TOATE REZULTATELE =============
+    fout << "REZULTATE PROBLEMA CLICII MAXIME\n";
+    fout << "=================================\n\n";
+    
+    fout << "Graf: " << n << " noduri, " << m << " muchii\n";
+    fout << "Densitate: " << fixed << setprecision(2) << (2.0 * m) / (n * (n - 1)) * 100 << "%\n\n";
+    
+    // Algoritm 1: Backtracking Exact
+    fout << "1.  BACKTRACKING EXACT (Optimal)\n";
+    fout << "   Dimensiune clică:  " << exactClique.size() << "\n";
+    fout << "   Noduri: ";
     for (int node : exactClique) {
         fout << node << " ";
     }
     fout << "\n";
-    fout.close();
+    fout << "   Timp execuție:  " << duration1.count() << " μs\n";
+    fout << "   Validitate: " << (verifyClique(g, exactClique) ? "Valid" : "Invalid") << "\n\n";
     
-    cout << "\nRezultatul a fost scris în clique.out\n";
+    // Algoritm 2: Greedy Heuristic
+    fout << "2. GREEDY HEURISTIC\n";
+    fout << "   Dimensiune clică: " << greedyClique.size() << "\n";
+    fout << "   Noduri: ";
+    for (int node : greedyClique) {
+        fout << node << " ";
+    }
+    fout << "\n";
+    fout << "   Timp execuție: " << duration2.count() << " μs\n";
+    fout << "   Acuratețe: " << fixed << setprecision(2) << accuracy2 << "%\n";
+    fout << "   Speedup: " << (double)duration1.count() / max(1LL, (long long)duration2.count()) << "x\n";
+    fout << "   Validitate: " << (verifyClique(g, greedyClique) ? "Valid" : "Invalid") << "\n\n";
+    
+    // Algoritm 3: Branch and Bound
+    fout << "3. BRANCH AND BOUND (Optimal)\n";
+    fout << "   Dimensiune clică: " << bnbClique.size() << "\n";
+    fout << "   Noduri: ";
+    for (int node : bnbClique) {
+        fout << node << " ";
+    }
+    fout << "\n";
+    fout << "   Timp execuție: " << duration3.count() << " μs\n";
+    fout << "   Acuratețe: " << fixed << setprecision(2) << accuracy3 << "%\n";
+    fout << "   Speedup: " << (double)duration1.count() / max(1LL, (long long)duration3.count()) << "x\n";
+    fout << "   Validitate: " << (verifyClique(g, bnbClique) ? "Valid" : "Invalid") << "\n\n";
+    
+    // Sumar comparativ
+    fout << "=================================\n";
+    fout << "SUMAR COMPARATIV\n";
+    fout << "=================================\n\n";
+    fout << "Cea mai bună soluție: " << exactClique.size() << " noduri\n";
+    fout << "Cel mai rapid algoritm:  Greedy Heuristic (" << duration2.count() << " μs)\n";
+    fout << "Algoritm recomandat pentru acest graf: ";
+    if (n <= 30) {
+        fout << "Backtracking Exact (graf mic)\n";
+    } else if (n <= 50) {
+        fout << "Branch and Bound (graf mediu)\n";
+    } else {
+        fout << "Greedy Heuristic (graf mare)\n";
+    }
+    
+    fout. close();
+    
+    cout << "\nRezultatele tuturor algoritmilor au fost scrise în clique.out\n";
     
     return 0;
 }
